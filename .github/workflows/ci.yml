@@ -10,13 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check project is bootstrapped
+        id: check
+        run: |
+          if [ -f package.json ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "package.json not found. Run the 'Bootstrap native project' workflow first."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.ready == 'true'
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
+
       - name: Install dependencies
+        if: steps.check.outputs.ready == 'true'
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
       - name: Typecheck
+        if: steps.check.outputs.ready == 'true'
         run: npm run typecheck
